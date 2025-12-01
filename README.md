@@ -1,0 +1,300 @@
+# Advanced Trading Bot
+
+Bot trading otomatis dengan analisis multi-indikator (RSI, EMA, ngtCV) dan sistem notifikasi Telegram.
+
+## Fitur Baru 🚀
+
+- **Keamanan**: Credentials disimpan aman di file `.env`
+- **Multi-Indikator**: Menggabungkan RSI, EMA Trend, dan ngtCV
+- **Risk Management**: Stop Loss, Take Profit, dan Confidence Threshold
+- **Struktur Modular**: Kode terorganisir di folder `src/`
+- **Performance Tracking**: Win rate dan statistik akurasi real-time
+
+## Struktur Project
+
+```
+bot_trading/
+├── .env                # File konfigurasi rahasia (Token, Chat ID)
+├── config.py           # Konfigurasi bot & strategi
+├── trading_bot.py      # Main entry point
+├── requirements.txt    # Dependencies
+└── src/
+    ├── data/           # Binance API handler
+    ├── indicators/     # Technical indicators (RSI, EMA, ngtCV)
+    ├── strategy/       # Signal generation logic
+    ├── notifications/  # Telegram handler
+    └── utils/          # Logger & helpers
+```
+
+## Instalasi
+
+1. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Setup Environment**
+   - Copy file `.env.example` menjadi `.env`
+   - Isi token Telegram Anda di file `.env`:
+     ```
+     TELEGRAM_BOT_TOKEN=your_token_here
+     TELEGRAM_CHAT_ID=your_chat_id_here
+     ```
+
+3. **Konfigurasi (Opsional)**
+   - Buka `config.py` untuk mengubah:
+     - Pair trading (`SYMBOL`)
+     - Timeframe (`INTERVAL`)
+     - Parameter indikator
+     - Risk management settings
+
+## Penggunaan
+
+Jalankan bot dengan perintah:
+
+```bash
+py trading_bot.py
+```
+(atau `python trading_bot.py` tergantung sistem Anda)
+
+## Strategi Trading
+
+Bot menggunakan sistem scoring -3 sampai +3:
+
+1. **RSI (14)**:
+   - Oversold (<30) -> +1 point
+   - Overbought (>70) -> -1 point
+
+2. **EMA Trend (12/26)**:
+   - Golden Cross/Bullish -> +1 point
+# Advanced Trading Bot
+
+Bot trading otomatis dengan analisis multi-indikator (RSI, EMA, ngtCV) dan sistem notifikasi Telegram.
+
+## Fitur Baru 🚀
+
+- **Keamanan**: Credentials disimpan aman di file `.env`
+- **Multi-Indikator**: Menggabungkan RSI, EMA Trend, dan ngtCV
+- **Risk Management**: Stop Loss, Take Profit, dan Confidence Threshold
+- **Struktur Modular**: Kode terorganisir di folder `src/`
+- **Performance Tracking**: Win rate dan statistik akurasi real-time
+
+## Struktur Project
+
+```
+bot_trading/
+├── .env                # File konfigurasi rahasia (Token, Chat ID)
+├── config.py           # Konfigurasi bot & strategi
+├── trading_bot.py      # Main entry point
+├── requirements.txt    # Dependencies
+└── src/
+    ├── data/           # Binance API handler
+    ├── indicators/     # Technical indicators (RSI, EMA, ngtCV)
+    ├── strategy/       # Signal generation logic
+    ├── notifications/  # Telegram handler
+    └── utils/          # Logger & helpers
+```
+
+## Instalasi
+
+1. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Setup Environment**
+   - Copy file `.env.example` menjadi `.env`
+   - Isi token Telegram Anda di file `.env`:
+     ```
+     TELEGRAM_BOT_TOKEN=your_token_here
+     TELEGRAM_CHAT_ID=your_chat_id_here
+     ```
+
+3. **Konfigurasi (Opsional)**
+   - Buka `config.py` untuk mengubah:
+     - Pair trading (`SYMBOL`)
+     - Timeframe (`INTERVAL`)
+     - Parameter indikator
+     - Risk management settings
+
+## Penggunaan
+
+Jalankan bot dengan perintah:
+
+```bash
+py trading_bot.py
+```
+(atau `python trading_bot.py` tergantung sistem Anda)
+
+## Strategi Trading
+
+Bot menggunakan sistem scoring -3 sampai +3:
+
+1. **RSI (14)**:
+   - Oversold (<30) -> +1 point
+   - Overbought (>70) -> -1 point
+
+2. **EMA Trend (12/26)**:
+   - Golden Cross/Bullish -> +1 point
+   - Death Cross/Bearish -> -1 point
+
+3. **ngtCV (Custom)**:
+   - Strong Bullish (>0.1) -> +1 point
+   - Strong Bearish (<-0.1) -> -1 point
+
+**Sinyal:**
+- **BUY**: Score >= +2 (Confidence tinggi)
+- **SELL**: Score <= -2 (Confidence tinggi)
+- **HOLD**: Score di antara -1 dan +1
+
+## Metodologi & Penjelasan Indikator
+
+### 1. RSI (Relative Strength Index)
+
+**Konsep:**
+RSI mengukur momentum harga dengan membandingkan kekuatan pergerakan naik vs turun dalam periode tertentu (default: 14 candle).
+
+**Formula:**
+```
+RSI = 100 - (100 / (1 + RS))
+RS = Average Gain / Average Loss
+```
+
+**Interpretasi:**
+- **RSI > 70**: Pasar overbought (jenuh beli) → kemungkinan koreksi turun → Sinyal SELL
+- **RSI < 30**: Pasar oversold (jenuh jual) → kemungkinan rebound naik → Sinyal BUY
+- **RSI 30-70**: Kondisi normal
+
+**Penggunaan di Bot:**
+```python
+if RSI < 30:
+    score += 1  # Bullish signal
+elif RSI > 70:
+    score -= 1  # Bearish signal
+```
+
+### 2. EMA (Exponential Moving Average)
+
+**Konsep:**
+EMA adalah rata-rata bergerak yang memberikan bobot lebih pada harga terbaru, sehingga lebih responsif terhadap perubahan harga dibanding SMA.
+
+**Formula:**
+```
+EMA_today = (Price_today × K) + (EMA_yesterday × (1 - K))
+K = 2 / (Period + 1)
+```
+
+**Strategi Golden/Death Cross:**
+- **Golden Cross**: EMA Short (12) > EMA Long (26) → Trend Bullish → Sinyal BUY
+- **Death Cross**: EMA Short (12) < EMA Long (26) → Trend Bearish → Sinyal SELL
+
+**Penggunaan di Bot:**
+```python
+ema_short = calculate_ema(prices, 12)
+ema_long = calculate_ema(prices, 26)
+
+if ema_short > ema_long:
+    score += 1  # Bullish trend
+else:
+    score -= 1  # Bearish trend
+```
+
+### 3. ngtCV (Custom Candle Value Indicator)
+
+**Konsep:**
+Indikator custom yang menganalisis kualitas candle berdasarkan:
+- **Body**: Ukuran tubuh candle (selisih open-close)
+- **Wick**: Panjang bayangan (upper + lower shadow)
+- **Direction**: Arah candle (bullish/bearish)
+
+**Formula:**
+```
+Total_Range = High - Low
+Body_Ratio = |Close - Open| / Total_Range
+Wick_Ratio = (Upper_Shadow + Lower_Shadow) / Total_Range
+Direction = 1 if Close > Open else -1
+
+ngtCV = (Body_Ratio × Direction × 0.6) - (Wick_Ratio × 0.2)
+```
+
+**Interpretasi:**
+- **ngtCV > 0.1**: Candle bullish kuat (body besar, wick kecil) → BUY
+- **ngtCV < -0.1**: Candle bearish kuat → SELL
+- Wick besar mengurangi kekuatan sinyal (indikasi indecision/rejection)
+
+**Penggunaan di Bot:**
+```python
+avg_ngtcv = sum([calculate_ngtCV(c) for c in last_3_candles]) / 3
+
+if avg_ngtcv > 0.1:
+    score += 1  # Strong bullish candles
+elif avg_ngtcv < -0.1:
+    score -= 1  # Strong bearish candles
+```
+
+### 4. Kombinasi Multi-Indikator
+
+Bot menggunakan **voting system** untuk menghindari false signals:
+
+**Contoh Skenario 1 - Strong BUY Signal:**
+```
+RSI = 25 (oversold)          → +1 point
+EMA: Short > Long (bullish)  → +1 point
+ngtCV = 0.15 (strong bull)   → +1 point
+-------------------------------------------
+Total Score = +3             → BUY ✅
+Confidence = 3/3 = 100%
+```
+
+**Contoh Skenario 2 - Conflicting Signals:**
+```
+RSI = 75 (overbought)        → -1 point
+EMA: Short > Long (bullish)  → +1 point
+ngtCV = 0.05 (neutral)       → 0 point
+-------------------------------------------
+Total Score = 0              → HOLD ⏸️
+Confidence = 0%
+```
+
+**Contoh Skenario 3 - Moderate SELL:**
+```
+RSI = 45 (neutral)           → 0 point
+EMA: Short < Long (bearish)  → -1 point
+ngtCV = -0.12 (strong bear)  → -1 point
+-------------------------------------------
+Total Score = -2             → SELL ✅
+Confidence = 2/3 = 67%
+```
+
+### 5. Risk Management
+
+Bot memiliki built-in risk management (dapat diatur di `config.py`):
+
+```python
+RISK_MANAGEMENT = {
+    'max_risk_per_trade': 0.02,   # 2% maximum risk
+    'stop_loss_pct': 0.02,        # 2% stop loss
+    'take_profit_pct': 0.04,      # 4% take profit (1:2 R/R)
+    'min_confidence': 0.6         # Minimum 60% confidence
+}
+```
+
+**Catatan:** Risk management saat ini masih konseptual. Untuk trading real, perlu implementasi order management yang sebenarnya.
+
+### 6. Evaluasi Akurasi
+
+Bot mencatat setiap prediksi dan membandingkannya dengan hasil aktual:
+
+```python
+Prediction = BUY (prediksi harga naik)
+Next Candle Close > Previous Close → Correct ✅
+Win Rate = (Correct Predictions / Total Predictions) × 100%
+```
+
+**Threshold Evaluasi:**
+- Perubahan harga < 0.1% dianggap noise (tidak dievaluasi)
+- Hanya prediksi BUY/SELL yang dievaluasi (HOLD diabaikan)
+
+## Disclaimer
+
+Bot ini adalah alat bantu simulasi. **Gunakan dengan risiko Anda sendiri.** Penulis tidak bertanggung jawab atas kerugian finansial yang mungkin terjadi.
