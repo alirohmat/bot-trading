@@ -14,7 +14,7 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-    print("WARNING: Telegram credentials not found in .env file!")
+    raise ValueError("Telegram credentials not found in .env file! Please set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID")
 
 # Parameter tambahan untuk analisis
 THRESHOLD_MULTIPLIER = 0.05  # Multiplier untuk menentukan ambang tren (5%)
