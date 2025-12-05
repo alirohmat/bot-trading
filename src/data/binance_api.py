@@ -46,7 +46,7 @@ def fetch_ohlcv_data(symbol: str, interval: str, limit: int) -> List[Dict]:
             return ohlcv_data
             
         except requests.exceptions.RequestException as e:
-            logger.error(f"Error fetching data from Binance API (Attempt {attempt+1}/{max_retries}): {e}")
+            logger.error(f"Error fetching data from Binance API (Attempt {attempt+1}/{max_retries}): {e}", exc_info=True)
             if attempt < max_retries - 1:
                 time.sleep(retry_delay)
             else:
