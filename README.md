@@ -1,8 +1,8 @@
 # Advanced Trading Bot
 
-Bot trading otomatis dengan analisis multi-indikator (RSI, EMA, MACD, ngtCV) dan sistem notifikasi Telegram. Bot ini telah ditingkatkan untuk mengatasi berbagai masalah dan kelemahan yang teridentifikasi.
+Bot trading otomatis dengan analisis multi-indikator (RSI, EMA, MACD, ngtCV) dan sistem notifikasi Telegram.
 
-## Fitur Baru 🚀
+## Fitur 🚀
 
 - **Keamanan**: Credentials disimpan aman di file `.env`
 - **Multi-Indikator**: Menggabungkan RSI, EMA, MACD, dan ngtCV
@@ -10,22 +10,22 @@ Bot trading otomatis dengan analisis multi-indikator (RSI, EMA, MACD, ngtCV) dan
 - **Struktur Modular**: Kode terorganisir di folder `src/`
 - **Performance Tracking**: Win rate dan statistik akurasi real-time
 - **State Persistence**: Data tidak hilang saat bot restart
-- **OOP Approach**: Refactored dengan pendekatan Object-Oriented Programming
-- **Improved Error Handling**: Dengan logging traceback lengkap
+- **OOP Approach**: Menggunakan pendekatan Object-Oriented Programming
+- **Error Handling**: Logging traceback lengkap
 - **Interruptible Sleep**: Bot dapat dihentikan dengan CTRL+C
 
 ## Struktur Project
 
 ```
-bot_trading/
+.
 ├── .env                # File konfigurasi rahasia (Token, Chat ID)
 ├── config.py           # Konfigurasi bot & strategi
-├── trading_bot.py      # Main entry point (OOP-based)
+├── trading_bot.py      # Main entry point
 ├── requirements.txt    # Dependencies
-├── revisi.md           # Daftar perbaikan dan analisis
+├── data/               # Data storage (state.json)
 └── src/
     ├── data/           # Binance API handler
-    ├── indicators/     # Technical indicators (RSI, EMA, MACD, ngtCV)
+    ├── indicators/     # Technical indicators
     ├── strategy/       # Signal generation logic
     ├── notifications/  # Telegram handler
     └── utils/          # Logger & helpers
@@ -60,46 +60,6 @@ Jalankan bot dengan perintah:
 ```bash
 python trading_bot.py
 ```
-
-## Perbaikan Berdasarkan Analisis
-
-Bot telah ditingkatkan berdasarkan analisis dalam file `revisi.md` dengan perbaikan-perbaikan berikut:
-
-### 1. Perbaikan Indikator ngtCV
-- **Masalah**: Indikator `ngtCV` tidak menggunakan volume dalam perhitungan meskipun volume_factor sudah dihitung
-- **Perbaikan**: Menambahkan volume_factor ke dalam rumus perhitungan ngtCV sesuai dengan bobot yang ditentukan di config.py
-- **Konfigurasi**: Bobot volume diatur di `NGTCV_WEIGHTS['volume']` di config.py
-
-### 2. Perbaikan Fungsi MACD
-- **Masalah**: Fungsi `calculate_macd` hanya mengembalikan MACD line, bukan signal line dan histogram
-- **Perbaikan**: Implementasi lengkap MACD dengan perhitungan EMA untuk signal line dan histogram
-- **Output**: Fungsi kini mengembalikan `(macd_line, signal_line, histogram)`
-
-### 3. Perbaikan Mekanisme Sleep
-- **Masalah**: Penggunaan `time.sleep()` yang panjang membuat bot sulit dihentikan
-- **Perbaikan**: Mengganti dengan loop dengan sleep pendek (1 detik) agar bisa diinterupsi dengan CTRL+C
-- **Durasi**: Bot menunggu 900 detik (15 menit) atau 3600 detik (1 jam) tergantung interval
-
-### 4. Penambahan Persistensi State
-- **Masalah**: Data hilang saat bot restart
-- **Perbaikan**: Menyimpan state ke file JSON (`data/state.json`) termasuk:
-  - `previous_prediction`: Prediksi sebelumnya
-  - `previous_candle`: Candle sebelumnya
-  - `prediction_stats`: Statistik akurasi (correct, incorrect, total, win_rate)
-
-### 5. Refactoring ke OOP
-- **Masalah**: Pendekatan prosedural dengan variabel global
-- **Perbaikan**: Membuat class `TradingBot` untuk mengelola state dan fungsi-fungsi utama
-- **Keuntungan**: Lebih mudah di-maintain dan diuji
-
-### 6. Perbaikan Logging
-- **Masalah**: Error handling hanya menampilkan pesan tanpa traceback lengkap
-- **Perbaikan**: Menambahkan `exc_info=True` untuk menampilkan traceback lengkap saat error
-- **Lokasi**: Di fungsi utama dan fungsi fetch_ohlcv_data
-
-### 7. Perbaikan Validasi Konfigurasi
-- **Masalah**: Validasi hanya menampilkan warning tanpa menghentikan program
-- **Perbaikan**: Mengganti dengan `raise ValueError` agar program berhenti jika token Telegram kosong
 
 ## Strategi Trading
 
@@ -266,7 +226,7 @@ Win Rate = (Correct Predictions / Total Predictions) × 100%
 
 ## Kontribusi
 
-Jika Anda menemukan bug atau memiliki saran perbaikan, silakan buat issue atau pull request. Perubahan-perubahan yang telah dilakukan mengikuti rekomendasi dari file `revisi.md`.
+Jika Anda menemukan bug atau memiliki saran perbaikan, silakan buat issue atau pull request.
 
 ## Disclaimer
 

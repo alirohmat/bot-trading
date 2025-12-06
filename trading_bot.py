@@ -158,7 +158,9 @@ def load_state():
     try:
         with open(STATE_FILE, 'r') as f:
             state = json.load(f)
-            return state.get('previous_prediction'), state.get('previous_candle'), state.get('prediction_stats', {
+            # Convert list back to tuple for type safety
+            previous_prediction = tuple(state.get('previous_prediction')) if state.get('previous_prediction') else None
+            return previous_prediction, state.get('previous_candle'), state.get('prediction_stats', {
                 'correct': 0,
                 'incorrect': 0,
                 'total': 0,

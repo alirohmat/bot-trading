@@ -1,0 +1,25 @@
+{
+  "previous_prediction": [
+    "HOLD",
+    0.0
+  ],
+  "previous_candle": {
+    "open_time": 1765035900000,
+    "open": 89873.6,
+    "high": 89950.9,
+    "low": 89860.55,
+    "close": 89874.75,
+    "volume": 22.88769,
+    "close_time": 1765036799999,
+    "quote_asset_volume": 2057645.5006065,
+    "number_of_trades": 8517,
+    "taker_buy_base_asset_volume": 6.96933,
+    "taker_buy_quote_asset_volume": 626518.6914972
+  },
+  "prediction_stats": {
+    "correct": 0,
+    "incorrect": 0,
+    "total": 0,
+    "win_rate": 0.0
+  }
+}

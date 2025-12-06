@@ -1,10 +1,35 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 from config import NGTCV_WEIGHTS
+
+def calculate_average_volume(historical_volumes: List[float], period: int = 20) -> float:
+    """
+    Menghitung rata-rata volume historis
+    
+    Args:
+        historical_volumes: Daftar volume historis
+        period: Periode untuk menghitung rata-rata (default 20)
+        
+    Returns:
+        Rata-rata volume dari periode terakhir
+    """
+    if not historical_volumes:
+        return 1000.0  # Default fallback
+    
+    # Ambil volume dari periode terakhir
+    recent_volumes = historical_volumes[-period:] if len(historical_volumes) >= period else historical_volumes
+    
+    if not recent_volumes:
+        return 1000.0  # Default fallback
+    
+    return sum(recent_volumes) / len(recent_volumes)
 
 def calculate_ngtCV(candle: Dict) -> Tuple[float, float, float, float]:
     """
     Menghitung indikator ngtCV yang ditingkatkan dengan normalisasi dan arah
     
+    Args:
+        candle: Dictionary yang berisi data OHLCV, termasuk 'historical_volumes' untuk perhitungan referensi volume dinamis
+        
     Returns:
         ngtcv: Nilai indikator (-1.0 to 1.0)
         body_size: Ukuran body candle
@@ -16,9 +41,11 @@ def calculate_ngtCV(candle: Dict) -> Tuple[float, float, float, float]:
     high_price = candle['high']
     low_price = candle['low']
     volume = candle['volume']
+    # Ambil data volume historis dari parameter tambahan
+    historical_volumes = candle.get('historical_volumes', [])
     
     # Hitung body candle
-    body_size = abs(close_price - open_price)
+    body_size = float(abs(close_price - open_price))
     
     # Tentukan arah candle (1 untuk bullish, -1 untuk bearish)
     candle_direction = 1 if close_price >= open_price else -1
@@ -34,19 +61,16 @@ def calculate_ngtCV(candle: Dict) -> Tuple[float, float, float, float]:
     # Normalisasi (hindari pembagian dengan nol)
     if total_range > 0:
         body_ratio = body_size / total_range
-        wick_ratio = total_wick / total_range
+        wick_ratio = float(total_wick / total_range)
     else:
-        body_ratio = 0
-        wick_ratio = 0
+        body_ratio = 0.0
+        wick_ratio = 0.0
         
-    # Volume factor - untuk implementasi lengkap, ini seharusnya dibandingkan dengan rata-rata volume sebelumnya
-    # Namun untuk saat ini, kita tetap mengembalikan volume_factor agar kompatibel dengan fungsi lain
-    # Dalam implementasi yang lebih lengkap, parameter tambahan diperlukan untuk menyediakan rata-rata volume
+    # Volume factor - sekarang dibandingkan dengan rata-rata volume historis sebagai referensi dinamis
     if volume > 0:
-        # Kita gunakan volume sebagai faktor normalisasi terhadap nilai tetap untuk saat ini
-        # Dalam implementasi sebenarnya, ini harus dibandingkan dengan rata-rata volume sebelumnya
-        avg_volume_reference = 1000  # Nilai referensi - dalam praktik sebenarnya ini harus dihitung dari data sebelumnya
-        volume_factor = volume / avg_volume_reference
+        # Kita gunakan volume sebagai faktor normalisasi terhadap rata-rata volume historis
+        avg_volume_reference = calculate_average_volume(historical_volumes)
+        volume_factor = volume / avg_volume_reference if avg_volume_reference > 0 else 1.0
     else:
         volume_factor = 1.0  # Default jika volume tidak tersedia
     
