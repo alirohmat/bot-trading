@@ -36,9 +36,9 @@ class TradingBot:
         }
 
         # Initialize state
-                self.previous_prediction = None
-                self.previous_candle = None
-                self.previous_indicators = {}
+        self.previous_prediction = None
+        self.previous_candle = None
+        self.previous_indicators = {}
 
     def start(self):
         """
@@ -78,10 +78,10 @@ class TradingBot:
                 current_price = current_candle['close']
 
                 # 1. Evaluate Previous Prediction
-                                if self.previous_prediction and self.previous_candle:
-                                    # Ambil ATR dari indikator sebelumnya jika tersedia
-                                    atr_value = self.previous_indicators.get('atr') if hasattr(self, 'previous_indicators') else None
-                                    is_correct, pct_change = evaluate_prediction(self.previous_candle, current_candle, self.previous_prediction, atr_value)
+                if self.previous_prediction and self.previous_candle:
+                    # Ambil ATR dari indikator sebelumnya jika tersedia
+                    atr_value = self.previous_indicators.get('atr') if hasattr(self, 'previous_indicators') else None
+                    is_correct, pct_change = evaluate_prediction(self.previous_candle, current_candle, self.previous_prediction, atr_value)
 
                     if is_correct is not None:
                         if is_correct:
@@ -102,26 +102,26 @@ class TradingBot:
                         save_state(self.previous_prediction, self.previous_candle, self.prediction_stats)
 
                 # 2. Analyze Market
-                                trend, confidence, indicators = analyze_market(data)
-                                self.logger.info(f"Analysis: {trend} (Conf: {confidence:.2f}) | RSI: {indicators.get('rsi', 0):.1f}")
+                trend, confidence, indicators = analyze_market(data)
+                self.logger.info(f"Analysis: {trend} (Conf: {confidence:.2f}) | RSI: {indicators.get('rsi', 0):.1f}")
                 
-                                # 3. Generate Signal
-                                signal, conf = generate_signal((trend, confidence, indicators))
+                # 3. Generate Signal
+                signal, conf = generate_signal((trend, confidence, indicators))
                 
-                                if signal != "HOLD":
-                                    self.logger.info(f"🔔 SIGNAL: {signal}")
-                                    # Tambahkan informasi posisi terhadap support/resistance ke dalam pesan
-                                    sr_position = indicators.get('sr_position', 'AWAY_FROM_LEVELS')
-                                    msg = format_signal_message(SYMBOL, INTERVAL, signal, conf, current_price, indicators, sr_position)
-                                    send_telegram(msg, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
+                if signal != "HOLD":
+                    self.logger.info(f"🔔 SIGNAL: {signal}")
+                    # Tambahkan informasi posisi terhadap support/resistance ke dalam pesan
+                    sr_position = indicators.get('sr_position', 'AWAY_FROM_LEVELS')
+                    msg = format_signal_message(SYMBOL, INTERVAL, signal, conf, current_price, indicators, sr_position)
+                    send_telegram(msg, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
                 
-                                # 4. Store State
-                                self.previous_prediction = (signal, conf)
-                                self.previous_candle = current_candle
-                                self.previous_indicators = indicators
+                # 4. Store State
+                self.previous_prediction = (signal, conf)
+                self.previous_candle = current_candle
+                self.previous_indicators = indicators
                 
-                                # Save state to file
-                                save_state(self.previous_prediction, self.previous_candle, self.prediction_stats)
+                # Save state to file
+                save_state(self.previous_prediction, self.previous_candle, self.prediction_stats)
 
                 # Wait for next candle with interruptible sleep
                 self.logger.info(f"Waiting {self.sleep_seconds}s...")

@@ -1,5 +1,30 @@
 # Laporan Analisis & Revisi Codebase (Updated)
 
+## 0. Error Log & Fixes (07 Desember 2025)
+
+### Bug: IndentationError di trading_bot.py
+**Waktu Ditemukan**: 2025-12-07 00:59 WIB  
+**Status**: ✅ **FIXED**
+
+**Deskripsi Masalah**:
+Saat mencoba restart bot, ditemukan `IndentationError: unexpected indent` pada line 39 dan beberapa baris lainnya di `trading_bot.py`.
+
+**Root Cause**:
+- Line 39-41: Indentasi berlebihan pada inisialisasi state variables (`self.previous_prediction`, `self.previous_candle`, `self.previous_indicators`)
+- Line 81-84: Indentasi berlebihan pada blok evaluasi prediksi
+- Line 105-124: Indentasi berlebihan pada blok analisis market dan generate signal
+
+**Solusi**:
+Memperbaiki indentasi dengan mengurangi spasi berlebih dari 16+ spasi menjadi 8 spasi (2 level indentasi dalam method class).
+
+**Files Modified**:
+- `trading_bot.py`: Fixed indentation di lines 39-41, 81-84, 105-124
+
+**Impact**: Bot sekarang dapat dijalankan tanpa error syntax.
+
+---
+
+
 ## 1. Analisis Performa Aktual (Win Rate Stuck ~51%)
 
 Berdasarkan analisis kode `src/strategy/signal_generator.py` dan `src/indicators/support_resistance.py`, implementasi saat ini memiliki beberapa **kelemahan fatal** yang menyebabkan win rate tidak beranjak dari 50%:
