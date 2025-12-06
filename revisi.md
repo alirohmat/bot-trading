@@ -1,65 +1,71 @@
-# Laporan Analisis & Revisi Codebase
+# Laporan Analisis & Revisi Codebase (Updated)
 
-Berdasarkan tinjauan menyeluruh terhadap source code, berikut adalah daftar kesalahan logika, masalah performa, dan saran pengembangan yang ditemukan:
+## 1. Analisis Performa Aktual (Win Rate Stuck ~51%)
 
-## 1. 🐛 Kesalahan Logika (Logic Errors) & Bug Kritis
+Berdasarkan analisis kode `src/strategy/signal_generator.py` dan `src/indicators/support_resistance.py`, implementasi saat ini memiliki beberapa **kelemahan fatal** yang menyebabkan win rate tidak beranjak dari 50%:
 
-### A. Referensi Volume Hardcoded (`src/indicators/ngtcv.py`)
-*   **Masalah**: Pada baris 48, referensi volume rata-rata di-hardcode:
-    ```python
-    avg_volume_reference = 1000  # Nilai referensi
-    ```
-*   **Dampak**: Indikator ini **tidak valid** untuk aset dengan volume berbeda. Contoh: Volume 1000 BTC mungkin sangat tinggi, tapi 1000 SHIB sangat rendah. Ini membuat sinyal `ngtCV` menjadi bias dan tidak bisa dipercaya.
-*   **Solusi**: Fungsi harus menerima data historis untuk menghitung *Moving Average Volume* (misal: rata-rata 20 candle terakhir) sebagai pembanding dinamis.
-
-### B. Inefisiensi Kalkulasi MACD (`src/indicators/technical.py`)
-*   **Masalah**: Fungsi `calculate_macd` melakukan loop manual dan menghitung ulang EMA dari awal array untuk *setiap kali dipanggil*.
-*   **Dampak**: Sangat lambat dan memboroskan CPU, terutama jika `limit` candle besar atau saat backtesting. Kompleksitas algoritmanya bisa menjadi kuadratik (O(n^2)) secara efektif karena re-kalkulasi berulang dalam loop tersembunyi.
-*   **Solusi**: Gunakan vektorisasi dengan **Pandas** atau **Numpy** yang jauh lebih cepat dan efisien.
-
-### C. Type Safety pada State Persistence (`trading_bot.py`)
-*   **Masalah**: Fungsi `load_state` mengembalikan tuple dari JSON, tetapi JSON secara inheren menyimpan urutan sebagai list.
-    ```python
-    # Saat save: ("BUY", 0.9) -> JSON: ["BUY", 0.9]
-    # Saat load: variabel menjadi list, bukan tuple.
-    ```
-*   **Dampak**: Meskipun Python saat ini mentoleransi unpacking list sebagai tuple, jika ada kode yang secara spesifik mengecek tipe data `isinstance(x, tuple)`, kode akan error.
-*   **Solusi**: Explicit casting saat load: `tuple(state.get('previous_prediction'))`.
-
-## 2. 🚀 Saran Pengembangan & Optimasi
-
-### A. Migrasi ke Pandas untuk Indikator
-Saat ini indikator dihitung dengan loop Python murni. Ini tidak *scalable*.
-**Rekomendasi**: Ubah `src/indicators/technical.py` untuk menggunakan `pandas.DataFrame` dan `ewm()`.
-```python
-# Contoh Optimasi EMA
-def calculate_ema(series, period):
-    return series.ewm(span=period, adjust=False).mean()
-```
-
-### B. Single Responsibility Principle pada Sinyal
-Logika scoring di `src/strategy/signal_generator.py` terlalu sederhana (linear scoring +1/-1).
-**Rekomendasi**:
-1.  Pisahkan logika entry dan exit.
-2.  Tambahkan filter volatilitas (misal: jangan trade jika Bollinger Bands terlalu sempit/squeeze).
-3.  Gunakan sistem bobot (weighted scoring) daripada poin integer sederhana.
-
-### C. Manajemen Dependensi
-File `requirements.txt` belum menyertakan `pandas` yang sangat disarankan untuk analisis data time-series.
-**Rekomendasi**: Tambahkan `pandas>=1.3.0`.
-
-### D. Unit Testing
-Tidak ada tes otomatis untuk memastikan logika indikator benar.
-**Rekomendasi**: Buat file `tests/test_indicators.py` untuk memvalidasi output indikator dibandingkan dengan nilai yang diketahui (misal dari library TA-Lib).
+1.  **Support/Resistance "Loose"**: Toleransi deteksi support saat ini setara **2%** dari harga (`tolerance=0.02`).
+    -   *Contoh*: Pada harga BTC 100,000, toleransi ini mendeteksi area 2,000 poin sebagai "Support". Ini terlalu lebar untuk timeframe 15m, menyebabkan bot sering masuk terlalu awal.
+2.  **Fake Multi-Timeframe**: Kode saat ini menghitung indikator "jangka panjang" (EMA 200) menggunakan data 15m yang sama. Ini bukan *True Multi-Timeframe*. Tren 200 candle 15m hanyalah tren 2 hari, bukan tren makro.
+3.  **No Volatility Filter**: Bot tetap trading saat pasar *sideways* sempit (Low ADX), di mana indikator trend-following (EMA) dan momentum (RSI) sering memberikan sinyal palsu (whipsaw).
 
 ---
 
-## 3. Rencana Perbaikan (Action Plan)
+## 2. 🚀 Master Plan: Menuju Win Rate > 60%
 
-Jika disetujui, saya dapat melakukan langkah-langkah berikut:
+Untuk mencapai target win rate, kita harus memperketat filter secara drastis. "Less Trades, Better Quality."
 
-1.  **Refactor Indicators**: Menulis ulang `src/indicators/technical.py` menggunakan Numpy/Pandas.
-2.  **Fix ngtCV**: Memperbaiki logika volume agar dinamis berdasarkan rata-rata historis.
-3.  **Update Strategy**: Menyesuaikan `analyze_market` agar memanfaatkan indikator yang sudah dioptimasi.
+### A. True Multi-Timeframe Trend (1H / 4H) ✅ **[CRITICAL]**
+Jangan gunakan data 15m untuk melihat tren besar.
+-   **Logika Baru**: Fetch data tambahan **interval 1H**.
+-   **Aturan**:
+    -   Hitung EMA 50 pada timeframe **1H**.
+    -   HANYA Buy jika: `Close (15m) > EMA 50 (1H)`.
+    -   HANYA Sell jika: `Close (15m) < EMA 50 (1H)`.
+-   **Efek**: Filter ini jauh lebih kuat menahan posisi lawan tren daripada EMA 200 di 15m.
 
-Apakah Anda ingin saya mulai dengan perbaikan nomor 1 (Refactor Indicators) atau memperbaiki bug volume (Fix ngtCV) terlebih dahulu?
+### B. Perbaikan Support/Resistance Tolerance
+-   **Masalah**: Toleransi 2% terlalu lebar.
+-   **Solusi**: Kurangi toleransi menjadi **0.2% - 0.3%**.
+    -   Hanya anggap valid jika harga benar-benar menyentuh level kunci.
+
+### C. ADX Filter (Trend Strength)
+-   **Saran**: Tambahkan indikator **ADX (Average Directional Index)**.
+-   **Aturan**:
+    -   Jika `ADX > 25`: Market Trending -> Gunakan Strategi Follow Trend (Buy on Dip).
+    -   Jika `ADX < 20`: Market Sideways -> **JANGAN TRADING** atau gunakan strategi Mean Reversion (Buy Low, Sell High, abaikan EMA).
+    -   *Rekomendasi Awal*: Matikan trading saat ADX < 20 untuk menghindari chop.
+
+### D. Entry Trigger: Bullish/Bearish Engulfing
+-   **Masalah**: Saat ini bot langsung Buy saat RSI < 30. Seringkali harga lanjut longsor (RSI menjadi 20, 15...).
+-   **Solusi**: Tunggu **Konfirmasi Candle**.
+    -   Sinyal: (`RSI < 30`) + (`Close > Open` / Candle Hijau) + (`Close > High candle sebelumnya`).
+    -   Artinya kita tidak menangkap pisau jatuh, tapi menunggu pantulan pertama.
+
+### E. Dynamic Breakeven (Protect Profits)
+-   **Saran**: Jika harga sudah bergerak profit +1% (atau +1R), geser Stop Loss ke harga Entry.
+-   **Efek**: Mengubah trade yang "hampir profit lalu balik arah" menjadi BEP (Break Even Point), bukan Loss. Ini menjaga Win Rate (atau setidaknya Loss Rate).
+
+---
+
+## 3. Rencana Implementasi Code (Revised)
+
+### Langkah 1: Fix Toleransi SR (Quick Win)
+Ubah default tolerance di `is_near_support_resistance` dari `0.02` menjadi `0.003` (0.3%).
+
+### Langkah 2: Implementasi ADX Filter
+Di `src/indicators/technical.py` dan `signal_generator.py`:
+```python
+adx = calculate_adx(highs, lows, closes, period=14)
+if adx < 20:
+    return "NEUTRAL", 0.0, {} # Filter out choppy markets
+```
+
+### Langkah 3: Update Logika Sinyal (Trigger)
+Ubah syarat RSI oversold murni menjadi RSI + Price Action:
+```python
+# Pseudo-code untuk Trigger
+is_bullish_candle = current_close > current_open and current_close > previous_high
+if rsi < 30 and is_bullish_candle:
+    return "BUY"
+```

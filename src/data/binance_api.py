@@ -52,3 +52,13 @@ def fetch_ohlcv_data(symbol: str, interval: str, limit: int) -> List[Dict]:
             else:
                 return []
     return []
+
+
+def fetch_ohlcv_data_multiple_timeframes(symbol: str, intervals: List[str], limit: int) -> Dict[str, List[Dict]]:
+    """
+    Mengambil data OHLCV dari API Binance untuk beberapa timeframe sekaligus
+    """
+    results = {}
+    for interval in intervals:
+        results[interval] = fetch_ohlcv_data(symbol, interval, limit)
+    return results

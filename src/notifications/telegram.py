@@ -27,7 +27,7 @@ def send_telegram(message: str, bot_token: str, chat_id: str) -> bool:
         logger.error(f"Error sending message to Telegram: {e}")
         return False
 
-def format_signal_message(symbol: str, interval: str, signal: str, confidence: float, price: float, indicators: dict) -> str:
+def format_signal_message(symbol: str, interval: str, signal: str, confidence: float, price: float, indicators: dict, sr_position: str = None) -> str:
     """
     Format pesan sinyal trading
     """
@@ -37,11 +37,31 @@ def format_signal_message(symbol: str, interval: str, signal: str, confidence: f
     msg += f"Symbol: `{symbol}`\n"
     msg += f"Interval: `{interval}`\n"
     msg += f"Price: `{price}`\n"
-    msg += f"Confidence: `{confidence:.2f}`\n\n"
+    msg += f"Confidence: `{confidence:.2f}`\n"
+    
+    # Tambahkan informasi posisi terhadap support/resistance
+    if sr_position:
+        sr_icon = ""
+        if sr_position == "NEAR_SUPPORT":
+            sr_icon = "🟢"
+        elif sr_position == "NEAR_RESISTANCE":
+            sr_icon = "🔴"
+        else:
+            sr_icon = "🟡"
+        
+        msg += f"Support/Resistance: `{sr_position}` {sr_icon}\n\n"
+    else:
+        msg += "\n"
     
     msg += "*Indicators:*\n"
     msg += f"RSI: `{indicators.get('rsi', 0):.2f}`\n"
     msg += f"EMA Trend: `{indicators.get('ema_trend', 'N/A')}`\n"
     msg += f"ngtCV: `{indicators.get('ngtcv', 0):.4f}`\n"
+    
+    # Tambahkan informasi tambahan jika tersedia
+    trend_filter = indicators.get('trend_filter', 'N/A')
+    macd_histogram = indicators.get('macd_histogram', 0)
+    msg += f"Trend Filter: `{trend_filter}`\n"
+    msg += f"MACD Histogram: `{macd_histogram:.4f}`\n"
     
     return msg

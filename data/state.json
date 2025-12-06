@@ -4,17 +4,17 @@
     0.0
   ],
   "previous_candle": {
-    "open_time": 1765035900000,
-    "open": 89873.6,
-    "high": 89950.9,
-    "low": 89860.55,
-    "close": 89874.75,
-    "volume": 22.88769,
-    "close_time": 1765036799999,
-    "quote_asset_volume": 2057645.5006065,
-    "number_of_trades": 8517,
-    "taker_buy_base_asset_volume": 6.96933,
-    "taker_buy_quote_asset_volume": 626518.6914972
+    "open_time": 1765043100000,
+    "open": 89663.84,
+    "high": 89696.14,
+    "low": 89659.0,
+    "close": 89674.83,
+    "volume": 11.73858,
+    "close_time": 1765043999999,
+    "quote_asset_volume": 1052582.3924515,
+    "number_of_trades": 3170,
+    "taker_buy_base_asset_volume": 11.07892,
+    "taker_buy_quote_asset_volume": 993430.1087222
   },
   "prediction_stats": {
     "correct": 0,

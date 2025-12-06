@@ -66,11 +66,16 @@ def calculate_ngtCV(candle: Dict) -> Tuple[float, float, float, float]:
         body_ratio = 0.0
         wick_ratio = 0.0
         
-    # Volume factor - sekarang dibandingkan dengan rata-rata volume historis sebagai referensi dinamis
+    # Relative Volume (RVOL) - Membandingkan volume saat ini dengan rata-rata volume 20 candle terakhir
+    # Hanya menghasilkan sinyal valid jika Volume > 1.5x Rata-rata Volume 20 candle terakhir
     if volume > 0:
-        # Kita gunakan volume sebagai faktor normalisasi terhadap rata-rata volume historis
         avg_volume_reference = calculate_average_volume(historical_volumes)
         volume_factor = volume / avg_volume_reference if avg_volume_reference > 0 else 1.0
+        
+        # Tambahkan pengecekan untuk Relative Volume (Point D dari revisi.md)
+        if volume_factor < 1.5:
+            # Jika volume tidak signifikan, kurangi kekuatan sinyal
+            volume_factor = volume_factor * 0.5  # Mengurangi kontribusi volume jika tidak signifikan
     else:
         volume_factor = 1.0  # Default jika volume tidak tersedia
     

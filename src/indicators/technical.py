@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import List
+from typing import List, Dict
 
 def calculate_rsi(prices: List[float], period: int = 14) -> float:
     """
@@ -55,6 +55,28 @@ def calculate_ema(prices: List[float], period: int) -> float:
     series = pd.Series(prices)
     return calculate_ema_pandas(series, period)
 
+def calculate_ema_multiple(prices: List[float], periods: List[int]) -> Dict[int, float]:
+    """
+    Calculate multiple EMAs at once for efficiency
+    Returns a dictionary with period as key and EMA value as value
+    """
+    if not prices:
+        return {period: 0.0 for period in periods}
+    
+    import pandas as pd
+    series = pd.Series(prices)
+    
+    result = {}
+    for period in periods:
+        if len(prices) < period:
+            # If data is less than period, use average
+            result[period] = sum(prices) / len(prices)
+        else:
+            ema_series = series.ewm(span=period, adjust=False).mean()
+            result[period] = float(ema_series.iloc[-1])
+    
+    return result
+
 def calculate_macd(prices: List[float], fast: int = 12, slow: int = 26, signal: int = 9):
     """
     Calculate MACD (Moving Average Convergence Divergence) using pandas for efficiency
@@ -91,3 +113,72 @@ def calculate_macd(prices: List[float], fast: int = 12, slow: int = 26, signal: 
     histogram = macd_line - signal_line
     
     return macd_line, signal_line, histogram
+
+
+def calculate_adx(highs: List[float], lows: List[float], closes: List[float], period: int = 14) -> float:
+    """
+    Calculate Average Directional Index (ADX)
+    """
+    if len(highs) < period + 1:
+        return 25.0  # Return neutral value if not enough data
+    
+    # Calculate True Range (TR)
+    tr_values = []
+    for i in range(1, len(highs)):
+        tr = max(
+            highs[i] - lows[i],  # High - Low
+            abs(highs[i] - closes[i-1]),  # High - Previous Close
+            abs(lows[i] - closes[i-1])  # Low - Previous Close
+        )
+        tr_values.append(tr)
+    
+    # Calculate Directional Movement (+DM and -DM)
+    plus_dm = []
+    minus_dm = []
+    for i in range(1, len(highs)):
+        up_move = highs[i] - highs[i-1]
+        down_move = lows[i-1] - lows[i]
+        
+        if up_move > down_move and up_move > 0:
+            plus_dm.append(up_move)
+        else:
+            plus_dm.append(0)
+        
+        if down_move > up_move and down_move > 0:
+            minus_dm.append(down_move)
+        else:
+            minus_dm.append(0)
+    
+    # Smooth the values using Wilder's method
+    smoothed_tr = [sum(tr_values[:period])]
+    smoothed_plus_dm = [sum(plus_dm[:period])]
+    smoothed_minus_dm = [sum(minus_dm[:period])]
+    
+    for i in range(period, len(tr_values)):
+        smoothed_tr.append(smoothed_tr[-1] - (smoothed_tr[-1] / period) + tr_values[i])
+        smoothed_plus_dm.append(
+            smoothed_plus_dm[-1] - (smoothed_plus_dm[-1] / period) + plus_dm[i]
+        )
+        smoothed_minus_dm.append(
+            smoothed_minus_dm[-1] - (smoothed_minus_dm[-1] / period) + minus_dm[i]
+        )
+    
+    # Calculate Directional Indicators (+DI and -DI)
+    plus_di = [(smoothed_plus_dm[i] / smoothed_tr[i]) * 100 if smoothed_tr[i] != 0 else 0
+               for i in range(len(smoothed_tr))]
+    minus_di = [(smoothed_minus_dm[i] / smoothed_tr[i]) * 100 if smoothed_tr[i] != 0 else 0
+                for i in range(len(smoothed_tr))]
+    
+    # Calculate Directional Movement Index (DX)
+    dx_values = []
+    for i in range(len(plus_di)):
+        total_di = plus_di[i] + minus_di[i]
+        dx = (abs(plus_di[i] - minus_di[i]) / total_di) * 100 if total_di != 0 else 0
+        dx_values.append(dx)
+    
+    # Calculate ADX (average of DX)
+    if len(dx_values) >= period:
+        adx = sum(dx_values[-period:]) / period
+        return float(adx)
+    else:
+        return 25.0  # Return neutral value if not enough data

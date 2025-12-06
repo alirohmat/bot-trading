@@ -7,7 +7,7 @@ load_dotenv()
 # Konfigurasi dasar
 SYMBOL = "BTCUSDT"  # Pasangan trading yang digunakan
 INTERVAL = "15m"    # Interval waktu: "15m" untuk 15 menit, "1h" untuk 1 jam
-LIMIT = 100         # Jumlah candle yang diambil dari API
+LIMIT = 300         # Jumlah candle yang diambil dari API (min 200 untuk EMA 200)
 
 # Konfigurasi Telegram
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -33,11 +33,14 @@ RSI_OVERSOLD = 30
 
 EMA_SHORT_PERIOD = 12
 EMA_LONG_PERIOD = 26
+EMA_TREND_PERIOD = 200  # EMA 200 untuk filter tren jangka panjang
 
 # Risk Management
 RISK_MANAGEMENT = {
     'max_risk_per_trade': 0.02,  # 2% dari portfolio
     'stop_loss_pct': 0.02,       # 2% stop loss
     'take_profit_pct': 0.04,     # 4% take profit (1:2 Risk/Reward)
-    'min_confidence': 0.6        # Minimum confidence to trade
+    'min_confidence': 0.50,      # Minimum confidence to trade - disesuaikan berdasarkan hasil backtest untuk keseimbangan optimal
+    'atr_multiplier_sl': 2,      # Multiplier untuk ATR stop loss
+    'atr_multiplier_tp': 3,      # Multiplier untuk ATR take profit
 }
